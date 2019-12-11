@@ -64,9 +64,6 @@ public class RoutingContext {
 	public int targetY;
 	public boolean targetTransportStop;
 	public boolean publicTransport;
-	// deprecated
-	public long firstRoadId;
-	public int firstRoadDirection;
 	
 	public RouteCalculationProgress calculationProgress;
 	public boolean leftSideNavigation;
@@ -83,9 +80,12 @@ public class RoutingContext {
 	ArrayList<RouteSegment> segmentsToVisitPrescripted = new ArrayList<BinaryRoutePlanner.RouteSegment>(5);
 	ArrayList<RouteSegment> segmentsToVisitNotForbidden = new ArrayList<BinaryRoutePlanner.RouteSegment>(5);
 	
+	// 4. final route segment
+	public FinalRouteSegment finalRouteSegment;
 	
 	// 5. debug information (package accessor)
 	public TileStatistics global = new TileStatistics();
+	
 	// updated by route planner in bytes
 	public int memoryOverhead = 0;
 	
@@ -107,10 +107,9 @@ public class RoutingContext {
 	// callback of processing segments
 	RouteSegmentVisitor visitor = null;
 	RouteSegmentEstimate estimate = null;
-
-	// old planner
-	public FinalRouteSegment finalRouteSegment;
-
+	
+	// don't finish calculation when route is found
+	public boolean neverEndingRoute = false;
 
 	
 	

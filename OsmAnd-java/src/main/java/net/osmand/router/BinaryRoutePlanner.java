@@ -430,7 +430,11 @@ public class BinaryRoutePlanner {
 			// store <segment> in order to not have unique <segment, direction> in visitedSegments
 			long routePointId = calculateRoutePointId(segment.getRoad(), segment.isPositive() ? segmentPoint - 1 : segmentPoint,
 					segment.isPositive());
-			visitedSegments.put(routePointId, previous != null ? previous : segment);
+			if(ctx.neverEndingRoute) {
+				visitedSegments.put(routePointId, null);
+			} else {
+				visitedSegments.put(routePointId, previous != null ? previous : segment);
+			}
 			final int x = road.getPoint31XTile(segmentPoint);
 			final int y = road.getPoint31YTile(segmentPoint);
 			final int prevx = road.getPoint31XTile(prevInd);
@@ -558,6 +562,9 @@ public class BinaryRoutePlanner {
 	private boolean checkIfOppositeSegmentWasVisited(final RoutingContext ctx, boolean reverseWaySearch,
 			PriorityQueue<RouteSegment> graphSegments, RouteSegment segment, TLongObjectHashMap<RouteSegment> oppositeSegments,
 			int segmentPoint, float segmentDist, float obstaclesTime) {
+		if (ctx.neverEndingRoute) {
+			return false;
+		}
 		RouteDataObject road = segment.getRoad();
 		long opp = calculateRoutePointId(road, segment.isPositive() ? segmentPoint - 1 : segmentPoint, !segment.isPositive());
 		if (oppositeSegments.containsKey(opp)) {
@@ -739,14 +746,12 @@ public class BinaryRoutePlanner {
 		}
 		int targetEndX = reverseWaySearch ? ctx.startX : ctx.targetX;
 		int targetEndY = reverseWaySearch ? ctx.startY : ctx.targetY;
-		float distanceToEnd = 0;
-		if(ctx.estimate != null) {
-			distanceToEnd = ctx.estimate.timeEstimate(segment, segmentPoint, reverseWaySearch ? ctx.start : ctx.target);
-		}  
-		if(distanceToEnd <= 0){
-			distanceToEnd = h(ctx, segment.getRoad().getPoint31XTile(segmentPoint), segment.getRoad()
+		float distanceToEnd = h(ctx, segment.getRoad().getPoint31XTile(segmentPoint), segment.getRoad()
 				.getPoint31YTile(segmentPoint), targetEndX, targetEndY);
-		}
+		if(ctx.estimate != null) {
+			float te = ctx.estimate.timeEstimate(segment, segmentPoint, reverseWaySearch ? ctx.start : ctx.target);
+			distanceToEnd = Math.max(distanceToEnd, te);
+		}  
 		// Calculate possible ways to put into priority queue
 		RouteSegment next = inputNext;
 		boolean hasNext = nextIterator != null ? nextIterator.hasNext() : next != null;

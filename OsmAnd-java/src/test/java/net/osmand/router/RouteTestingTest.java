@@ -66,7 +66,7 @@ public class RouteTestingTest {
 		RoutingConfiguration.Builder builder = RoutingConfiguration.getDefault();
 		Map<String, String> params = te.getParams();
 		RoutingConfiguration config = builder.build(params.containsKey("vehicle") ? params.get("vehicle") : "car",
-				RoutingConfiguration.DEFAULT_MEMORY_LIMIT * 3, params);
+				RoutingConfiguration.DEFAULT_MEMORY_LIMIT_PC, params);
 		RoutingContext ctx = fe.buildRoutingContext(config, null, binaryMapIndexReaders,
 				RoutePlannerFrontEnd.RouteCalculationMode.NORMAL);
 		ctx.leftSideNavigation = false;

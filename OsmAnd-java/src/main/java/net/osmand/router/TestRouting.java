@@ -201,7 +201,7 @@ public class TestRouting {
 			System.err.println("\n\n!! Skipped test case '" + testDescription + "' because 'best_percent' attribute is not specified \n\n" );
 			return;
 		}
-		RoutingConfiguration rconfig = config.build(vehicle, MEMORY_TEST_LIMIT);
+		RoutingConfiguration rconfig = config.build(vehicle, RoutingConfiguration.DEFAULT_MEMORY_LIMIT_PC);
 		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd();
 		RoutingContext ctx = router.buildRoutingContext(rconfig, 
 				lib, rs);
@@ -306,7 +306,7 @@ public class TestRouting {
 			throws IOException, InterruptedException {
 		long ts = System.currentTimeMillis();
 		Builder config = RoutingConfiguration.getDefault();
-		RoutingConfiguration rconfig = config.build(vehicle, MEMORY_TEST_LIMIT);
+		RoutingConfiguration rconfig = config.build(vehicle, RoutingConfiguration.DEFAULT_MEMORY_LIMIT_PC);
 		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd();
 		RoutingContext ctx = router.buildRoutingContext(rconfig, lib, rs);
 		RouteSegment startSegment = router.findRouteSegment(startLat, startLon, ctx, null);

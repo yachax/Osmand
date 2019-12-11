@@ -21,6 +21,7 @@ import java.util.Stack;
 public class RoutingConfiguration {
 
 	public static final int DEFAULT_MEMORY_LIMIT = 30;
+	public static final int DEFAULT_MEMORY_LIMIT_PC = 2000;
 	public final float DEVIATION_RADIUS = 3000;
 	public Map<String, String> attributes = new LinkedHashMap<String, String>();
 
