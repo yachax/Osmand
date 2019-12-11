@@ -6,13 +6,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
@@ -21,7 +18,6 @@ import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
-import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import net.osmand.NativeLibrary;
 import net.osmand.NativeLibrary.NativeRouteSearchResult;
@@ -34,9 +30,9 @@ import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteSubregion;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.router.BinaryRoutePlanner.FinalRouteSegment;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
+import net.osmand.router.BinaryRoutePlanner.RouteSegmentEstimate;
 import net.osmand.router.BinaryRoutePlanner.RouteSegmentVisitor;
 import net.osmand.router.RoutePlannerFrontEnd.RouteCalculationMode;
-import net.osmand.util.Algorithms;
 
 
 public class RoutingContext {
@@ -59,9 +55,11 @@ public class RoutingContext {
 	public final Map<RouteRegion, BinaryMapIndexReader> reverseMap = new LinkedHashMap<RouteRegion, BinaryMapIndexReader>();
 	
 	// 1. Initial variables
+	public RouteSegment start;
 	public int startX;
 	public int startY;
 	public boolean startTransportStop;
+	public RouteSegment target;
 	public int targetX;
 	public int targetY;
 	public boolean targetTransportStop;
@@ -74,6 +72,7 @@ public class RoutingContext {
 	public boolean leftSideNavigation;
 	public List<RouteSegmentResult> previouslyCalculatedRoute;
 	public PrecalculatedRouteDirection precalculatedRouteDirection;
+	public SegmentProcessor segmentProcessor;
 	
 	// 2. Routing memory cache (big objects)
 	TLongObjectHashMap<List<RoutingSubregionTile>> indexedSubregions = new TLongObjectHashMap<List<RoutingSubregionTile>>();
@@ -108,9 +107,13 @@ public class RoutingContext {
 	public int relaxedSegments = 0;
 	// callback of processing segments
 	RouteSegmentVisitor visitor = null;
+	RouteSegmentEstimate estimate = null;
 
 	// old planner
 	public FinalRouteSegment finalRouteSegment;
+
+
+	
 	
 	RoutingContext(RoutingContext cp) {
 		this.config = cp.config;
@@ -161,6 +164,18 @@ public class RoutingContext {
 		return visitor;
 	}
 	
+	public RouteSegmentEstimate getEstimate() {
+		return estimate;
+	}
+	
+	public void setVisitor(RouteSegmentVisitor visitor) {
+		this.visitor = visitor;
+	}
+	
+	public void setEstimate(RouteSegmentEstimate estimate) {
+		this.estimate = estimate;
+	}
+	
 	public int getCurrentlyLoadedTiles() {
 		int cnt = 0;
 		for(RoutingSubregionTile t : this.subregionTiles){
@@ -173,11 +188,6 @@ public class RoutingContext {
 	
 	public int getCurrentEstimatedSize(){
 		return global.size;
-	}
-	
-	
-	public void setVisitor(RouteSegmentVisitor visitor) {
-		this.visitor = visitor;
 	}
 
 	public void setRouter(GeneralRouter router) {
@@ -208,11 +218,13 @@ public class RoutingContext {
 	
 	public void initStartAndTargetPoints(RouteSegment start, RouteSegment end) {
 		initTargetPoint(end);
+		this.start = start;
 		startX = start.road.getPoint31XTile(start.getSegmentStart());
 		startY = start.road.getPoint31YTile(start.getSegmentStart());		
 	}
 
 	public void initTargetPoint(RouteSegment end) {
+		this.target = end;
 		targetX = end.road.getPoint31XTile(end.getSegmentStart());
 		targetY = end.road.getPoint31YTile(end.getSegmentStart());
 	}
@@ -810,8 +822,6 @@ public class RoutingContext {
 	public BinaryMapIndexReader[] getMaps() {
 		return map.keySet().toArray(new BinaryMapIndexReader[map.size()]);
 	}
-
-	
 
 
 }

@@ -265,6 +265,7 @@ public class BinaryRoutePlanner {
 		if (recalculationEnd != null) {
 			ctx.targetX = recalculationEnd.getRoad().getPoint31XTile(recalculationEnd.getSegmentStart());
 			ctx.targetY = recalculationEnd.getRoad().getPoint31YTile(recalculationEnd.getSegmentStart());
+			ctx.target = recalculationEnd;
 		}
 		float estimatedDistance = (float) estimatedDistance(ctx, ctx.targetX, ctx.targetY, ctx.startX, ctx.startY);
 		if (startPos != null) {
@@ -426,9 +427,10 @@ public class BinaryRoutePlanner {
 				directionAllowed = false;
 				continue;
 			}
-			// store <segment> in order to not have unique <segment, direction> in visitedSegments 
-			visitedSegments.put(calculateRoutePointId(segment.getRoad(), segment.isPositive() ? segmentPoint - 1 : segmentPoint,
-					segment.isPositive()), previous != null ? previous : segment);
+			// store <segment> in order to not have unique <segment, direction> in visitedSegments
+			long routePointId = calculateRoutePointId(segment.getRoad(), segment.isPositive() ? segmentPoint - 1 : segmentPoint,
+					segment.isPositive());
+			visitedSegments.put(routePointId, previous != null ? previous : segment);
 			final int x = road.getPoint31XTile(segmentPoint);
 			final int y = road.getPoint31YTile(segmentPoint);
 			final int prevx = road.getPoint31XTile(prevInd);
@@ -482,6 +484,9 @@ public class BinaryRoutePlanner {
 				// more precise but slower
 				distStartObstacles = ctx.precalculatedRouteDirection.getDeviationDistance(x, y) / ctx.getRouter().getMaxSpeed();
 			}
+			if(ctx.visitor != null ) {
+				ctx.visitor.visitSegmentPart(reverseWaySearch, segment, segmentPoint, distStartObstacles, routePointId);
+			}
 
 			// We don't check if there are outgoing connections
 			previous = processIntersections(ctx, graphSegments, visitedSegments, distStartObstacles,
@@ -492,7 +497,7 @@ public class BinaryRoutePlanner {
 			}
 		}
 		if (initDirectionAllowed && ctx.visitor != null) {
-			ctx.visitor.visitSegment(segment, segmentPoint, true);
+			ctx.visitor.visitSegment(reverseWaySearch, segment, segmentPoint);
 		}
 	}
 
@@ -734,8 +739,14 @@ public class BinaryRoutePlanner {
 		}
 		int targetEndX = reverseWaySearch ? ctx.startX : ctx.targetX;
 		int targetEndY = reverseWaySearch ? ctx.startY : ctx.targetY;
-		float distanceToEnd = h(ctx, segment.getRoad().getPoint31XTile(segmentPoint), segment.getRoad()
+		float distanceToEnd = 0;
+		if(ctx.estimate != null) {
+			distanceToEnd = ctx.estimate.timeEstimate(segment, segmentPoint, reverseWaySearch ? ctx.start : ctx.target);
+		}  
+		if(distanceToEnd <= 0){
+			distanceToEnd = h(ctx, segment.getRoad().getPoint31XTile(segmentPoint), segment.getRoad()
 				.getPoint31YTile(segmentPoint), targetEndX, targetEndY);
+		}
 		// Calculate possible ways to put into priority queue
 		RouteSegment next = inputNext;
 		boolean hasNext = nextIterator != null ? nextIterator.hasNext() : next != null;
@@ -845,9 +856,18 @@ public class BinaryRoutePlanner {
 	}
 
 	
+	public interface RouteSegmentEstimate {
+		
+		public float timeEstimate(RouteSegment segment, short segmentPoint, RouteSegment target);
+
+	}
+	
 	public interface RouteSegmentVisitor {
 		
-		public void visitSegment(RouteSegment segment, int segmentEnd, boolean poll);
+		public void visitSegment(boolean reverseWaySearch, RouteSegment segment, int segmentEnd);
+
+		public void visitSegmentPart(boolean reverseWaySearch, RouteSegment segment, short segmentPoint, float distStartObstacles,
+				long routePointId);
 	}
 	
 	public static class RouteSegmentPoint extends RouteSegment {
