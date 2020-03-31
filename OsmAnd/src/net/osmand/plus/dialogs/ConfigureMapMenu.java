@@ -313,7 +313,7 @@ public class ConfigureMapMenu {
 				.setTitleId(R.string.shared_string_favorites, activity)
 				.setSelected(settings.SHOW_FAVORITES.get())
 				.setColor(selected ? R.color.osmand_orange : ContextMenuItem.INVALID_ID)
-				.setIcon(getContentIcon(R.drawable.ic_action_fav_dark));
+				.setIcon(R.drawable.ic_action_fav_dark)
 				.setListener(l).createItem());
 		selected = app.getPoiFilters().isShowingAnyPoi();
 		adapter.addItem(new ContextMenuItem.ItemBuilder()
